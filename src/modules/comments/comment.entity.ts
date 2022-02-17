@@ -5,24 +5,20 @@ import {
   DataType,
   Default,
   ForeignKey,
-  HasMany,
   Model,
   PrimaryKey,
   Table,
 } from 'sequelize-typescript';
 import { User } from '../users/user.entity';
-import { Comment } from '../comments/comment.entity';
+import { Post } from '../posts/post.entity';
 
-@Table({ tableName: 'posts', updatedAt: false })
-export class Post extends Model<Post> {
+@Table({ tableName: 'comments', updatedAt: false })
+export class Comment extends Model<Comment> {
   @PrimaryKey
   @Default(DataType.UUIDV4)
   @AllowNull(false)
   @Column(DataType.UUID)
   id: string;
-
-  @Column(DataType.STRING)
-  name: string;
 
   @Column(DataType.STRING)
   content: string;
@@ -37,6 +33,10 @@ export class Post extends Model<Post> {
   @Column(DataType.UUID)
   userId: string;
 
-  @HasMany(() => Comment)
-  comments: Comment[];
+  @BelongsTo(() => Post)
+  post: Post;
+
+  @ForeignKey(() => Post)
+  @Column(DataType.UUID)
+  postId: string;
 }

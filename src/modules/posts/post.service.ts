@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Post } from './post.entity';
-import { CreatePostDto, UpdatePostDto } from "./post.dto";
+import { CreatePostDto, UpdatePostDto } from './post.dto';
+import { Comment } from '../comments/comment.entity';
 
 @Injectable()
 export class PostService {
@@ -10,11 +11,15 @@ export class PostService {
   ) {}
 
   async getAll(): Promise<Post[]> {
-    return await this.postRepository.findAll();
+    return await this.postRepository.findAll({
+      include: [Comment],
+    });
   }
 
   async getById(postId: string): Promise<Post> {
-    return await this.postRepository.findByPk(postId);
+    return await this.postRepository.findByPk(postId, {
+      include: [Comment],
+    });
   }
 
   async create(post: CreatePostDto): Promise<Post> {

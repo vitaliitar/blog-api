@@ -8,7 +8,7 @@ import {
   Post,
   Put,
 } from '@nestjs/common';
-import { CreatePostDto } from './post.dto';
+import { CreatePostDto, UpdatePostDto } from './post.dto';
 
 @Controller('posts')
 export class PostController {
@@ -30,7 +30,7 @@ export class PostController {
   }
 
   @Put(':id')
-  async update(@Param('id') postId: string, @Body() body: CreatePostDto) {
+  async update(@Param('id') postId: string, @Body() body: UpdatePostDto) {
     return await this.postService.update(postId, body);
   }
 
