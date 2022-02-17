@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import configuration from '../../config/config';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { UserModule } from '../users/user.module';
+import { PostModule } from "../posts/post.module";
 
 @Module({
   imports: [
@@ -11,6 +12,7 @@ import { UserModule } from '../users/user.module';
       load: [configuration],
     }),
     UserModule,
+    PostModule,
     SequelizeModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
