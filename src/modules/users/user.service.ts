@@ -13,7 +13,10 @@ export class UserService {
 
   async getById(userId: string): Promise<User> {
     return await this.userRepository.findByPk(userId, {
-      include: [Comment, Post],
+      include: [
+        { model: Comment, attributes: { exclude: ['userId'] } },
+        { model: Post, attributes: { exclude: ['userId'] } },
+      ],
     });
   }
 
