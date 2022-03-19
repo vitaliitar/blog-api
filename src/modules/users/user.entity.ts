@@ -9,7 +9,7 @@ import {
   Table,
 } from 'sequelize-typescript';
 import { Post } from '../posts/post.entity';
-import { Comment } from "../comments/comment.entity";
+import { Comment } from '../comments/comment.entity';
 
 @Table({ tableName: 'users', updatedAt: false })
 export class User extends Model<User> {
@@ -21,6 +21,12 @@ export class User extends Model<User> {
 
   @Column(DataType.STRING)
   name: string;
+
+  @Column(DataType.STRING)
+  username: string;
+
+  @Column(DataType.STRING)
+  password: string;
 
   @Column(DataType.DATE)
   createdAt: string;
