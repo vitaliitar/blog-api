@@ -5,56 +5,37 @@ import { RefreshTokensRepository } from './refresh-token.repository';
 import { User } from '../users/user.entity';
 import { RefreshToken } from './refresh-token.entity';
 import { UserService } from '../users/user.service';
-
-const BASE_OPTIONS: SignOptions = {
-  issuer: 'https://my-app.com',
-  audience: 'https://my-app.com',
-};
-
-export interface RefreshTokenPayload {
-  jti: number;
-  sub: number;
-}
+import { RefreshTokenPayload } from './dto/refresh-token-payload.dto';
 
 @Injectable()
 export class TokensService {
-  private readonly tokens: RefreshTokensRepository;
-  private readonly users: UserService;
-  private readonly jwt: JwtService;
-
   public constructor(
-    tokens: RefreshTokensRepository,
-    users: UserService,
-    jwt: JwtService,
-  ) {
-    this.tokens = tokens;
-    this.users = users;
-    this.jwt = jwt;
-  }
+    private readonly tokensService: RefreshTokensRepository,
+    private readonly userService: UserService,
+    private readonly jwtService: JwtService,
+  ) {}
 
   public async generateAccessToken(user: User): Promise<string> {
     const opts: SignOptions = {
-      ...BASE_OPTIONS,
-      subject: String(user.id),
+      subject: user.id,
     };
 
-    return this.jwt.signAsync({}, opts);
+    return this.jwtService.signAsync({}, opts);
   }
 
   public async generateRefreshToken(
     user: User,
     expiresIn: number,
   ): Promise<string> {
-    const token = await this.tokens.createRefreshToken(user, expiresIn);
+    const token = await this.tokensService.createRefreshToken(user, expiresIn);
 
     const opts: SignOptions = {
-      ...BASE_OPTIONS,
       expiresIn,
-      subject: String(user.id),
-      jwtid: String(token.id),
+      subject: user.id,
+      jwtid: token.id,
     };
 
-    return this.jwt.signAsync({}, opts);
+    return this.jwtService.signAsync({}, opts);
   }
 
   public async resolveRefreshToken(
@@ -94,7 +75,7 @@ export class TokensService {
     token: string,
   ): Promise<RefreshTokenPayload> {
     try {
-      return this.jwt.verifyAsync(token);
+      return this.jwtService.verifyAsync(token);
     } catch (e) {
       if (e instanceof TokenExpiredError) {
         throw new UnprocessableEntityException('Refresh token expired');
@@ -113,7 +94,7 @@ export class TokensService {
       throw new UnprocessableEntityException('Refresh token malformed');
     }
 
-    return this.users.findForId(subId);
+    return this.userService.findForId(subId);
   }
 
   private async getStoredTokenFromRefreshTokenPayload(
@@ -125,6 +106,6 @@ export class TokensService {
       throw new UnprocessableEntityException('Refresh token malformed');
     }
 
-    return this.tokens.findTokenById(tokenId);
+    return this.tokensService.findTokenById(tokenId);
   }
 }

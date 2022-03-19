@@ -5,8 +5,8 @@ import { CreateUserDto } from './user.dto';
 import { Comment } from '../comments/comment.entity';
 import { Post } from '../posts/post.entity';
 import { compare, hash } from 'bcrypt';
-import { RegisterRequest } from '../auth/auth.dto';
 import { col, fn, where } from 'sequelize';
+import { RegisterRequest } from '../auth/dto/register-request.dto';
 
 @Injectable()
 export class UserService {
@@ -16,15 +16,12 @@ export class UserService {
 
   async getById(userId: string): Promise<User> {
     return await this.userRepository.findByPk(userId, {
+      attributes: { exclude: ['password'] },
       include: [
         { model: Comment, attributes: { exclude: ['userId'] } },
         { model: Post, attributes: { exclude: ['userId'] } },
       ],
     });
-  }
-
-  async create(user: CreateUserDto): Promise<User> {
-    return await this.userRepository.create<User>(user);
   }
 
   async update(userId: string, data: CreateUserDto): Promise<[number, User[]]> {
@@ -64,7 +61,7 @@ export class UserService {
     return user.save();
   }
 
-  public async findForId(id: number): Promise<User | null> {
+  public async findForId(id: string): Promise<User | null> {
     return this.userRepository.findOne({
       where: {
         id,

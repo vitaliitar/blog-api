@@ -7,89 +7,64 @@ import {
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
-import { User } from '../users/user.entity';
 import { UserService } from '../users/user.service';
 import { TokensService } from './token.service';
-import { LoginRequest, RefreshRequest, RegisterRequest } from './auth.dto';
-import { JWTGuard } from './jwt.guard';
-
-export interface AuthenticationPayload {
-  user: User;
-  payload: {
-    type: string;
-    token: string;
-    refresh_token?: string;
-  };
-}
+import { JWTGuard } from './jwt/jwt.guard';
+import { RegisterRequest } from './dto/register-request.dto';
+import { LoginRequest } from './dto/login-request.dto';
+import { RefreshRequest } from './dto/refresh-request.dto';
 
 @Controller('/api/auth')
 export class AuthenticationController {
-  private readonly users: UserService;
-  private readonly tokens: TokensService;
-
-  public constructor(users: UserService, tokens: TokensService) {
-    this.users = users;
-    this.tokens = tokens;
-  }
+  public constructor(
+    private readonly userService: UserService,
+    private readonly tokensService: TokensService,
+  ) {}
 
   @Post('/register')
   public async register(@Body() body: RegisterRequest) {
-    const user = await this.users.createUserFromRequest(body);
+    const user = await this.userService.createUserFromRequest(body);
 
-    const token = await this.tokens.generateAccessToken(user);
+    const token = await this.tokensService.generateAccessToken(user);
 
-    const refresh = await this.tokens.generateRefreshToken(
+    const refresh = await this.tokensService.generateRefreshToken(
       user,
       60 * 60 * 24 * 30,
     );
 
-    const payload = this.buildResponsePayload(user, token, refresh);
-
-    return {
-      status: 'success',
-      data: payload,
-    };
+    return { user, token, refresh };
   }
 
   @Post('/login')
   public async login(@Body() body: LoginRequest) {
     const { username, password } = body;
 
-    const user = await this.users.findForUsername(username);
+    const user = await this.userService.findForUsername(username);
     const valid = user
-      ? await this.users.validateCredentials(user, password)
+      ? await this.userService.validateCredentials(user, password)
       : false;
 
     if (!valid) {
       throw new UnauthorizedException('The login is invalid');
     }
 
-    const token = await this.tokens.generateAccessToken(user);
-    const refresh = await this.tokens.generateRefreshToken(
+    const token = await this.tokensService.generateAccessToken(user);
+    const refresh = await this.tokensService.generateRefreshToken(
       user,
       60 * 60 * 24 * 30,
     );
 
-    const payload = this.buildResponsePayload(user, token, refresh);
-
-    return {
-      status: 'success',
-      data: payload,
-    };
+    return { user, token, refresh };
   }
 
   @Post('/refresh')
   public async refresh(@Body() body: RefreshRequest) {
-    const { user, token } = await this.tokens.createAccessTokenFromRefreshToken(
-      body.refresh_token,
-    );
+    const { user, token } =
+      await this.tokensService.createAccessTokenFromRefreshToken(
+        body.refresh_token,
+      );
 
-    const payload = this.buildResponsePayload(user, token);
-
-    return {
-      status: 'success',
-      data: payload,
-    };
+    return { user, token };
   }
 
   @Get('/me')
@@ -97,26 +72,6 @@ export class AuthenticationController {
   public async getUser(@Req() request) {
     const userId = request.user.id;
 
-    const user = await this.users.findForId(userId);
-
-    return {
-      status: 'success',
-      data: user,
-    };
-  }
-
-  private buildResponsePayload(
-    user: User,
-    accessToken: string,
-    refreshToken?: string,
-  ): AuthenticationPayload {
-    return {
-      user: user,
-      payload: {
-        type: 'bearer',
-        token: accessToken,
-        ...(refreshToken ? { refresh_token: refreshToken } : {}),
-      },
-    };
+    return await this.userService.findForId(userId);
   }
 }
