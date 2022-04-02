@@ -7,6 +7,7 @@ import { UserModule } from '../users/user.module';
 import { PostModule } from '../posts/post.module';
 import { CommentModule } from '../comments/comment.module';
 import { AuthenticationModule } from '../auth/auth.module';
+import { StripeModule } from '../stripe/stripe.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { AuthenticationModule } from '../auth/auth.module';
         return config.get('database');
       },
     }),
+    StripeModule,
   ],
   controllers: [],
   providers: [],

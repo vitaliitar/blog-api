@@ -1,4 +1,8 @@
-import { Injectable, UnprocessableEntityException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { User } from './user.entity';
 import { CreateUserDto } from './user.dto';
@@ -7,11 +11,13 @@ import { Post } from '../posts/post.entity';
 import { compare, hash } from 'bcrypt';
 import { col, fn, where } from 'sequelize';
 import { RegisterRequest } from '../auth/dto/register-request.dto';
+import { Stripe } from 'stripe';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectModel(User) private readonly userRepository: typeof User,
+    @Inject('STRIPE') private readonly stripeService: Stripe,
   ) {}
 
   async getById(userId: string): Promise<User> {
@@ -74,6 +80,27 @@ export class UserService {
       where: {
         username: where(fn('lower', col('username')), username),
       },
+    });
+  }
+
+  public async change(
+    amount: number,
+    paymentMethodId: string,
+    customerId: string,
+  ) {
+    return this.stripeService.paymentIntents.create({
+      amount,
+      customer: customerId,
+      payment_method: paymentMethodId,
+      currency: 'usd',
+      confirm: true,
+    });
+  }
+
+  public async createCustomer(name: string, email: string) {
+    return this.stripeService.customers.create({
+      name,
+      email,
     });
   }
 }

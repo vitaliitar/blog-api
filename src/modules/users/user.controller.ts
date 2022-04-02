@@ -5,10 +5,11 @@ import {
   Delete,
   Get,
   Param,
-  Put,
-  UseGuards,
-} from '@nestjs/common';
-import { CreateUserDto } from './user.dto';
+  Post,
+  Put, Req,
+  UseGuards
+} from "@nestjs/common";
+import { CreateChargeDto, CreateUserDto } from './user.dto';
 import { JWTGuard } from '../auth/jwt/jwt.guard';
 
 @Controller('users')
@@ -31,5 +32,15 @@ export class UserController {
   @UseGuards(JWTGuard)
   async delete(@Param('id') userId: string) {
     return await this.userService.delete(userId);
+  }
+
+  @Post('charge')
+  @UseGuards(JWTGuard)
+  async createCharge(@Body() charge: CreateChargeDto, @Req() request) {
+    return await this.userService.change(
+      charge.amount,
+      charge.paymentMethodId,
+      request.user.stripe_id,
+    );
   }
 }
